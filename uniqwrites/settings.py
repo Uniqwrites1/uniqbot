@@ -113,3 +113,26 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Configure CSRF for Vercel
 CSRF_TRUSTED_ORIGINS = ['https://*.vercel.app']
+
+# Logging configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'whatsapp_bot.views': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'whatsapp_bot.bot_logic': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
