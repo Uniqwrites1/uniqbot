@@ -79,25 +79,40 @@ def process_message(message_data):
                 logger.info(f"Extracted phone: {phone_number}, message: {message_body}")
                 
                 # Log incoming message
-                MessageLog.objects.create(
-                    phone_number=phone_number,
-                    message_type="incoming",
-                    message_content=message_body
-                )
+                try:
+                    MessageLog.objects.create(
+                        phone_number=phone_number,
+                        message_type="incoming",
+                        message_content=message_body
+                    )
+                    logger.info("Incoming message logged successfully")
+                except Exception as db_error:
+                    logger.error(f"Error logging incoming message: {str(db_error)}")
                 
                 # Process with bot logic
                 bot = WhatsAppBot()
+                logger.info("Created WhatsAppBot instance")
+                
                 response = bot.process_message(phone_number, message_body)
+                logger.info(f"Bot generated response: {response}")
                 
                 if response:
-                    bot.send_message(phone_number, response)
+                    logger.info(f"Attempting to send message to {phone_number}")
+                    send_result = bot.send_message(phone_number, response)
+                    logger.info(f"Send message result: {send_result}")
                     
                     # Log outgoing message
-                    MessageLog.objects.create(
-                        phone_number=phone_number,
-                        message_type="outgoing",
-                        message_content=response
-                    )
+                    try:
+                        MessageLog.objects.create(
+                            phone_number=phone_number,
+                            message_type="outgoing",
+                            message_content=response
+                        )
+                        logger.info("Outgoing message logged successfully")
+                    except Exception as db_error:
+                        logger.error(f"Error logging outgoing message: {str(db_error)}")
+                else:
+                    logger.warning("Bot did not generate a response")
     
     except Exception as e:
         logger.error(f"Error processing message: {str(e)}")
