@@ -39,6 +39,10 @@ def verify_webhook(request):
             logger.warning(f"Webhook verification failed. Expected token: {settings.WHATSAPP_VERIFY_TOKEN}, Received token: {token}")
             return HttpResponseBadRequest("Verification failed")
     
+    # If no parameters, show helpful message instead of error
+    if not any([mode, token, challenge]):
+        return HttpResponse("Webhook endpoint is active. Use WhatsApp Business API to verify.")
+    
     logger.warning("Missing parameters in webhook verification")
     return HttpResponseBadRequest("Missing parameters")
 
