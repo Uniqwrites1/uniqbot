@@ -133,49 +133,30 @@ class WhatsAppBot:
 
     def process_message(self, phone_number, message):
         """Main message processing logic"""
-        # Get or create user session
-        session, created = UserSession.objects.get_or_create(
-            phone_number=phone_number,
-            defaults={'current_state': 'greeting'}
-        )
+        # For now, use simple stateless logic due to database connectivity issues
+        # TODO: Re-enable database when connection is stable
         
         message_lower = message.lower().strip()
         
-        # Handle back navigation
-        if message_lower == 'back':
-            if session.current_state == 'help_submenu':
-                session.current_state = 'help_menu'
-                session.save()
-                return BOT_RESPONSES["7"]
-            else:
-                session.current_state = 'greeting'
-                session.save()
-                return BOT_RESPONSES["greeting"]
-        
-        # Handle menu navigation
-        if message_lower in ['menu', 'start', 'main']:
-            session.current_state = 'greeting'
-            session.save()
-            return BOT_RESPONSES["greeting"]
-        
         # Handle help commands
         if message_lower in ['help', '7']:
-            session.current_state = 'help_menu'
-            session.save()
             return BOT_RESPONSES["7"]
         
         # Handle main menu options (1-6)
         if message_lower in ['1', '2', '3', '4', '5', '6']:
-            session.current_state = 'role_selected'
-            session.user_role = message_lower
-            session.save()
             return BOT_RESPONSES[message_lower]
         
         # Handle help submenu options (11-14)
         if message_lower in ['11', '12', '13', '14']:
-            session.current_state = 'help_submenu'
-            session.save()
             return BOT_RESPONSES[message_lower]
+        
+        # Handle back navigation - return to help menu
+        if message_lower == 'back':
+            return BOT_RESPONSES["7"]
+        
+        # Handle menu navigation
+        if message_lower in ['menu', 'start', 'main']:
+            return BOT_RESPONSES["greeting"]
         
         # Handle text alternatives
         text_mappings = {
@@ -193,19 +174,9 @@ class WhatsAppBot:
         
         if message_lower in text_mappings:
             mapped_option = text_mappings[message_lower]
-            if mapped_option in ['1', '2', '3', '4', '5', '6']:
-                session.current_state = 'role_selected'
-                session.user_role = mapped_option
-                session.save()
-                return BOT_RESPONSES[mapped_option]
-            else:
-                session.current_state = 'help_submenu'
-                session.save()
-                return BOT_RESPONSES[mapped_option]
+            return BOT_RESPONSES[mapped_option]
         
-        # Default: show greeting
-        session.current_state = 'greeting'
-        session.save()
+        # Default: show greeting for any unrecognized input
         return BOT_RESPONSES["greeting"]
 
     def send_message(self, phone_number, message):

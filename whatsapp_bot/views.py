@@ -78,7 +78,7 @@ def process_message(message_data):
                 
                 logger.info(f"Extracted phone: {phone_number}, message: {message_body}")
                 
-                # Log incoming message
+                # Log incoming message (continue even if database fails)
                 try:
                     MessageLog.objects.create(
                         phone_number=phone_number,
@@ -88,29 +88,45 @@ def process_message(message_data):
                     logger.info("Incoming message logged successfully")
                 except Exception as db_error:
                     logger.error(f"Error logging incoming message: {str(db_error)}")
+                    logger.info("Continuing without database logging...")
                 
-                # Process with bot logic
-                bot = WhatsAppBot()
-                logger.info("Created WhatsAppBot instance")
-                
-                response = bot.process_message(phone_number, message_body)
-                logger.info(f"Bot generated response: {response}")
-                
-                if response:
-                    logger.info(f"Attempting to send message to {phone_number}")
-                    send_result = bot.send_message(phone_number, response)
-                    logger.info(f"Send message result: {send_result}")
+                # Process with bot logic (this should work regardless of database issues)
+                try:
+                    bot = WhatsAppBot()
+                    logger.info("Created WhatsAppBot instance")
                     
-                    # Log outgoing message
+                    response = bot.process_message(phone_number, message_body)
+                    logger.info(f"Bot generated response: {response}")
+                    
+                    if response:
+                        logger.info(f"Attempting to send message to {phone_number}")
+                        send_result = bot.send_message(phone_number, response)
+                        logger.info(f"Send message result: {send_result}")
+                        
+                        # Log outgoing message (continue even if this fails)
+                        try:
+                            MessageLog.objects.create(
+                                phone_number=phone_number,
+                                message_type="outgoing",
+                                message_content=response
+                            )
+                            logger.info("Outgoing message logged successfully")
+                        except Exception as db_error:
+                            logger.error(f"Error logging outgoing message: {str(db_error)}")
+                            logger.info("Message sent successfully despite logging error")
+                    else:
+                        logger.warning("Bot did not generate a response")
+                        
+                except Exception as bot_error:
+                    logger.error(f"Error in bot processing: {str(bot_error)}")
+                    # Try to send a fallback message
                     try:
-                        MessageLog.objects.create(
-                            phone_number=phone_number,
-                            message_type="outgoing",
-                            message_content=response
-                        )
-                        logger.info("Outgoing message logged successfully")
-                    except Exception as db_error:
-                        logger.error(f"Error logging outgoing message: {str(db_error)}")
+                        bot = WhatsAppBot()
+                        fallback_response = "Sorry, I'm experiencing some technical difficulties. Please try again later."
+                        bot.send_message(phone_number, fallback_response)
+                        logger.info("Sent fallback message due to bot processing error")
+                    except Exception as fallback_error:
+                        logger.error(f"Failed to send fallback message: {str(fallback_error)}")
                 else:
                     logger.warning("Bot did not generate a response")
     
