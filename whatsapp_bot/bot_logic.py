@@ -53,7 +53,8 @@ class SmartIntentRecognizer:
             
             'literacy_initiative': [
                 'literacy', 'reading program', 'literacy outreach', 'reading workshop',
-                'literacy immersion', 'reading skills', 'literacy support'
+                'literacy immersion', 'reading skills', 'literacy support', 'literacy programs',
+                'reading help', 'struggling reader', 'children reading', 'reading assistance'
             ],
             
             'back_to_school': [
